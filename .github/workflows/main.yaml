@@ -25,6 +25,9 @@ jobs:
           runtime: 'python312'
           memory: '128Mb'
           entrypoint: 'index.handler'
+          secrets: |
+            YDB_DATABASE=e6q06hs6gktrap1i2a2c/e6qjrs8h4vpbdla7tfbl/YDB_DATABASE
+            YDB_ENDPOINT=e6q06hs6gktrap1i2a2c/e6qjrs8h4vpbdla7tfbl/YDB_ENDPOINT
           include: |
             .
           exclude: |
