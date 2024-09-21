@@ -45,7 +45,7 @@ class YaGPTClient:
 
     async def req(self, promt_text: str, message_text: str) -> ResponseGPT:
         promt: RequestGTP = {
-            'modelUri': f'gpt://{FOLDER_ID}/yandexgpt/latest',
+            'modelUri': f'gpt://{FOLDER_ID}/yandexgpt-lite/latest',
             'completionOptions': {'stream': False, 'temperature': 0.0, 'maxTokens': 2000},
             'messages': [{'role': 'system', 'text': promt_text}, {'role': 'user', 'text': message_text}],
         }

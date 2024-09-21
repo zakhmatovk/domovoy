@@ -25,7 +25,7 @@ async def handler(event: Event, context):
         except Exception as e:
             return {'statusCode': 500, 'body': {'exception': str(e)}}
 
-    alice_request = AliceRequest.model_validate(body)
+    alice_request = AliceRequest.model_validate(event)
 
     reply = AliceResponse()
 
