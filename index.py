@@ -22,7 +22,7 @@ async def select_one():
 
 
 async def handler(event, context):
-    body = json.loads(event.get('body', '{}'))
+    body = json.loads(event.get('body') or '{}')
     if body.get('method') == 'apply_migrations':
         try:
             await apply_migrations()
