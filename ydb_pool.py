@@ -8,7 +8,7 @@ log = getLogger()
 # Параметры подключения
 YDB_ENDPOINT = os.getenv('YDB_ENDPOINT')
 YDB_DATABASE = os.getenv('YDB_DATABASE')
-YDB_HAS_CREDENTIALS = os.getenv('YDB_DATABASE', '').capitalize() == 'True'
+YDB_HAS_CREDENTIALS = os.getenv('YDB_HAS_CREDENTIALS', '').capitalize() == 'True'
 POOL_SIZE = 5
 
 
