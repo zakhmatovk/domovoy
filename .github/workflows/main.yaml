@@ -36,3 +36,12 @@ jobs:
             .git/**/*
             .git
             .github
+      
+      - name: Call API to apply migrations
+        env:
+          API_KEY: ${{ secrets.API_KEY_TO_CALL_CLOUD_FUNCTION }}
+        run: |
+          curl -X POST https://functions.yandexcloud.net/d4ek255vt1c7qg32erkr \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Api-Key $API_KEY" \
+            -d '{"method": "apply_migrations"}'
