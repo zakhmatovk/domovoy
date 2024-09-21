@@ -1,0 +1,34 @@
+name: Upload to S3
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v2
+
+      - name: Deploy Function
+        id: sls-func
+        uses: yc-actions/yc-sls-function@v2
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+          bucket: ${{ secrets.BUCKET }}
+          folder-id: 'b1gac1g0nm3qptu01u57'
+          function-name: 'domovoy'
+          service-account: 'ajeocdkp9qbbb04irg6k'
+          runtime: 'python312'
+          memory: '128Mb'
+          entrypoint: 'index.handler'
+          include: |
+            .
+          exclude: |
+            .github/**/*
+            .git/**/*
+            .git
+            .github
