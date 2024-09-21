@@ -1,6 +1,6 @@
 import json
 from logging import getLogger
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from pydantic import BaseModel
 from migrate import apply_migrations
@@ -26,7 +26,7 @@ CLASSIFY_PROMT = '''
 
 
 class RecognizedOperation(BaseModel):
-    operation: str
+    operation: Literal['out_of_stock', 'add_stock', 'task']
     entity: str
 
     def message(self):
@@ -72,8 +72,9 @@ async def handler(event: Event, context):
     reply = AliceResponse()
 
     try:
-        classify_result = await process(alice_request, reply)
+        await process(alice_request, reply)
     except Exception as e:
+        log.exception(e)
         reply.response.text = 'Во время обработки запроса что-то пошло не так'
         reply.response.end_session = True
 

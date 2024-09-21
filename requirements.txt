@@ -3,3 +3,7 @@ requests
 black
 pydantic
 alice-types
+pytest
+pytest-asyncio
+pytest-dotenv
+pytest-aiohttp
