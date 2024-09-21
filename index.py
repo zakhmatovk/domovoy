@@ -29,10 +29,10 @@ async def handler(event: Event, context):
 
     reply = AliceResponse()
 
-    if alice_request.is_new_session():
-        reply.response.text = "Привет, скажи что-нибудь и я это повторю"
-    else:
-        reply.response.text = alice_request.request.original_utterance
+    # if alice_request.is_new_session():
+    #     reply.response.text = "Привет, скажи что-нибудь и я это повторю"
+    # else:
+    reply.response.text = alice_request.request.original_utterance
 
     reply_body = reply.model_dump()
     log.warning(json.dumps(body))
