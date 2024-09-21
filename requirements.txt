@@ -2,3 +2,4 @@ ydb
 requests
 black
 pydantic
+alice-types

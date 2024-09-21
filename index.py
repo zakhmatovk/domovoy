@@ -2,6 +2,8 @@ import json
 from logging import getLogger
 from typing import TypedDict
 from migrate import apply_migrations
+from alice_types.request import AliceRequest
+from alice_types.response import AliceResponse
 
 log = getLogger()
 
@@ -14,6 +16,7 @@ class Event(TypedDict):
 
 async def handler(event: Event, context):
     body = json.loads(event.get('body') or '{}')
+    log.warning(json.dumps(body))
 
     if body.get('method') == 'apply_migrations':
         try:
@@ -21,10 +24,16 @@ async def handler(event: Event, context):
             return {'statusCode': 200}
         except Exception as e:
             return {'statusCode': 500, 'body': {'exception': str(e)}}
-    # Execute query with the retry_operation helper.
+
+    alice_request = AliceRequest.model_validate(body)
+
+    reply = AliceResponse()
+
+    if alice_request.is_new_session():
+        reply.response.text = "Привет, скажи что-нибудь и я это повторю"
+    else:
+        reply.response.text = alice_request.request.original_utterance
+
+    reply_body = reply.model_dump()
     log.warning(json.dumps(body))
-    return {
-        "version": event["version"],
-        "session": event["session"],
-        "response": {"text": 'Пытаюсь понять ответ', "end_session": True},
-    }
+    return reply_body
