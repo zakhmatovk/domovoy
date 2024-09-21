@@ -3,7 +3,7 @@ from typing import Literal, TypedDict
 
 import aiohttp
 
-YA_GPT_API_TOKEN = os.environ['YA_GPT_API_TOKEN']
+YA_GPT_KEY = os.environ['YA_GPT_KEY']
 FOLDER_ID = 'b1gac1g0nm3qptu01u57'
 
 
@@ -53,7 +53,7 @@ class YaGPTClient:
             async with session.post(
                 url=self.base_url,
                 json=promt,
-                headers={"Content-Type": "application/json", "Authorization": f"Api-Key {YA_GPT_API_TOKEN}"},
+                headers={"Content-Type": "application/json", "Authorization": f"Api-Key {YA_GPT_KEY}"},
             ) as response:
                 response.raise_for_status()
                 return await response.json()
