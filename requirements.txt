@@ -1,0 +1,4 @@
+ydb
+requests
+black
+pydantic

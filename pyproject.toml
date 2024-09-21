@@ -1,0 +1,11 @@
+[tool.black]
+workers = 16
+include = '.*\.pyi?$'
+extend-exclude = '''
+(
+    /\. # hidden files
+    | compiled_validators # codegen
+)
+'''
+line-length = 119
+skip-string-normalization = true
