@@ -15,13 +15,19 @@ MIGRATIONS_DIR = 'migrations'
 
 # Определение модели Pydantic для валидации данных
 class Migration(BaseModel):
-    name: str = Field(ydb_type=ydb.PrimitiveType.Utf8)
+    name: str = Field(json_schema_extra={'ydb_type': ydb.PrimitiveType.Utf8})
     'The name of the migration'
-    applied_at: datetime.datetime = Field(ydb_default='CurrentUtcDate()')
+    applied_at: datetime.datetime = Field(
+        json_schema_extra={'ydb_default': 'CurrentUtcDate()'}
+    )
     'The time when the migration was applied'
-    migration_code: str = Field(ydb_type=ydb.PrimitiveType.Utf8)
+    migration_code: str = Field(
+        json_schema_extra={'ydb_type': ydb.PrimitiveType.Utf8}
+    )
     'The code of the migration'
-    rollback_code: str = Field(ydb_type=ydb.PrimitiveType.Utf8)
+    rollback_code: str = Field(
+        json_schema_extra={'ydb_type': ydb.PrimitiveType.Utf8}
+    )
     'The code for rolling back the migration'
 
     async def insert(self):
@@ -66,11 +72,15 @@ async def apply_migrations():
     stored_migrations = {it.name: it for it in collect_migrations()}
     applied_migrations = {it.name: it for it in await fetch_migrations()}
 
-    old_migration_names = set(applied_migrations.keys()) - set(stored_migrations.keys())
+    old_migration_names = set(applied_migrations.keys()) - set(
+        stored_migrations.keys()
+    )
     for migration_name in sorted(list(old_migration_names)):
         await down_migration(applied_migrations[migration_name])
 
-    new_migration_names = set(stored_migrations.keys()) - set(applied_migrations.keys())
+    new_migration_names = set(stored_migrations.keys()) - set(
+        applied_migrations.keys()
+    )
     for migration_name in sorted(list(new_migration_names)):
         await up_migration(stored_migrations[migration_name])
 
