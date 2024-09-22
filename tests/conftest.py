@@ -4,11 +4,13 @@ from uuid import uuid4
 
 from aiohttp import web
 from aiohttp.test_utils import TestServer
+from h11 import Response
 from pydantic import BaseModel
 import pytest
 from alice_types.request import AliceRequest
 
-from clients.ya_gpt import BaseClient
+from clients.ya_gpt import BaseClient, ResponseGPT
+from index import RecognizedOperation
 from tests.dataset import Dataset
 
 
@@ -63,7 +65,7 @@ async def external_api(monkeypatch):
     Пример использования:
 
     ```
-    async def handle(request):
+    async def handle(request: web.Request) -> dict | BaseModel | web.Response | RecognizedOperation:
         return {'result': True}
 
     async with external_api(YaGPTClient, handle):
@@ -78,8 +80,29 @@ async def external_api(monkeypatch):
         '''
 
         async def external_handle(request: web.Request) -> web.Response:
-            response: dict | BaseModel | web.Response = await handle(request)
-            if isinstance(response, dict):
+            response: dict | BaseModel | web.Response | RecognizedOperation = (
+                await handle(request)
+            )
+            if isinstance(response, RecognizedOperation):
+                covered_response: ResponseGPT = {
+                    'result': {
+                        'alternatives': [
+                            {
+                                'status': 'ALTERNATIVE_STATUS_FINAL',
+                                'message': {
+                                    'text': response.model_dump_json(),
+                                    'role': 'assistant',
+                                },
+                            }
+                        ]
+                    }
+                }
+                return web.Response(
+                    status=200,
+                    body=json.dumps(covered_response).encode(),
+                    content_type='application/json',
+                )
+            elif isinstance(response, dict):
                 return web.Response(
                     status=200,
                     body=json.dumps(response).encode(),
