@@ -11,11 +11,15 @@ services:
       - "2136:2136"
       - "8765:8765"
     volumes:
-      - ./ydb_certs:/ydb_certs
-      - ./ydb_data:/ydb_data
+      - ydb_certs:/ydb_certs
+      - ydb_data:/ydb_data
     environment:
       - GRPC_TLS_PORT=2135
       - GRPC_PORT=2136
       - MON_PORT=8765
       - YDB_USE_IN_MEMORY_PDISKS=true
     restart: always
+
+volumes:
+  ydb_certs:
+  ydb_data:

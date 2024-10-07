@@ -4,13 +4,12 @@ from uuid import uuid4
 
 from aiohttp import web
 from aiohttp.test_utils import TestServer
-from h11 import Response
 from pydantic import BaseModel
 import pytest
 from alice_types.request import AliceRequest
 
 from clients.ya_gpt import BaseClient, ResponseGPT
-from index import RecognizedOperation
+from dialogs.general import RecognizedOperation
 from tests.dataset import Dataset
 
 

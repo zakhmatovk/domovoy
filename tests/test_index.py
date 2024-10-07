@@ -1,6 +1,6 @@
 from aiohttp import web
-from clients.ya_gpt import ResponseGPT, YaGPTClient
-from index import RecognizedOperation
+from clients.ya_gpt import YaGPTClient
+from dialogs.general import RecognizedOperation
 
 
 async def test_apply_migrations(api):
