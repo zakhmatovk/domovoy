@@ -7,6 +7,10 @@ YA_GPT_KEY = os.environ['YA_GPT_KEY']
 FOLDER_ID = 'b1gac1g0nm3qptu01u57'
 
 
+class NoReply(Exception):
+    pass
+
+
 class CompletionOptions(TypedDict):
     stream: bool
     temperature: float
@@ -78,6 +82,30 @@ class YaGPTClient(BaseClient):
         }
         response = await self._req(promt)
         return await response.json()
+
+    async def req_str(self, promt_text: str, message_text: str) -> str:
+        promt: RequestGTP = {
+            'modelUri': f'gpt://{FOLDER_ID}/yandexgpt-lite/latest',
+            'completionOptions': {
+                'stream': False,
+                'temperature': 0.0,
+                'maxTokens': 2000,
+            },
+            'messages': [
+                {'role': 'system', 'text': promt_text},
+                {'role': 'user', 'text': message_text},
+            ],
+        }
+        response = await self._req(promt)
+        response_data: ResponseGPT = await response.json()
+
+        text = None
+        for it in response_data['result']['alternatives']:
+            if it['status'] == 'ALTERNATIVE_STATUS_FINAL':
+                text = it['message']['text']
+        if text is None:
+            raise NoReply()
+        return text.strip('`')
 
 
 client = YaGPTClient()

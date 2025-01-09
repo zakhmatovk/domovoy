@@ -33,16 +33,12 @@ class RecognizedOperation(BaseModel):
 
 class GeneralDialog:
     async def process(self, request: AliceRequest, reply: AliceResponse):
-        r = await client.req(
+        text = await client.req_str(
             CLASSIFY_PROMT, request.request.original_utterance
         )
-        text = None
-        for it in r['result']['alternatives']:
-            if it['status'] == 'ALTERNATIVE_STATUS_FINAL':
-                text = it['message']['text']
         if text is None:
             return None
 
-        operation = RecognizedOperation.model_validate_json(text.strip('`'))
+        operation = RecognizedOperation.model_validate_json(text)
         reply.response.text = operation.message()
         reply.response.end_session = True

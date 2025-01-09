@@ -35,7 +35,7 @@ class Dataset:
                 user=None,
                 application=Application(application_id=application_id),
             ),
-            state=None,
+            state=kw.get('state'),
             version=version,
             account_linking_complete_event=None,
         )

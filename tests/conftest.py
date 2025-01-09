@@ -1,4 +1,5 @@
 import json
+from contextlib import asynccontextmanager
 from typing import Any, Callable, Coroutine, Generator
 from uuid import uuid4
 
@@ -52,9 +53,6 @@ async def alice_api() -> Generator[
 @pytest.fixture
 async def dataset() -> Generator[type[Dataset], Any, None]:
     yield Dataset
-
-
-from contextlib import asynccontextmanager
 
 
 @pytest.fixture
