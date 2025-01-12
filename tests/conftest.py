@@ -9,9 +9,20 @@ from pydantic import BaseModel
 import pytest
 from alice_types.request import AliceRequest
 
-from clients.ya_gpt import BaseClient, ResponseGPT
+from clients.base import BaseLLMClient
+from clients.ya_gpt import ResponseGPT
 from dialogs.general import RecognizedOperation
 from tests.dataset import Dataset
+
+
+class DummyLLMClient:
+    async def req_str(self, prompt_text: str, message_text: str) -> str:
+        return 'dummy'
+
+
+@pytest.fixture
+async def dummy_llm_client() -> BaseLLMClient:
+    return DummyLLMClient()
 
 
 @pytest.fixture
@@ -71,7 +82,7 @@ async def external_api(monkeypatch):
     '''
 
     @asynccontextmanager
-    async def _external_api(client: BaseClient, handle: Callable):
+    async def _external_api(client: BaseLLMClient, handle: Callable):
         '''
         Внутри контекстного менеджера поднимаем живой сервер и запросы ходят в него
         '''

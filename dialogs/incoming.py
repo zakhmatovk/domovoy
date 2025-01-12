@@ -1,8 +1,8 @@
-import re
-from typing import Literal, Self
+from typing import Self
 from pydantic import BaseModel
 from alice_types.request import AliceRequest
 from alice_types.response import AliceResponse
+from clients.base import BaseLLMClient
 from clients.ya_gpt import client
 from dialogs.base import BaseDialog
 from operations import ActionModel, ActionWithEntity, ActionWithCount, ACTIONS
@@ -21,7 +21,7 @@ class RecognizedBase(BaseModel):
         return ''
 
     @classmethod
-    async def process(cls, text: str) -> Self:
+    async def process(cls, client: BaseLLMClient, text: str) -> Self:
         text = await client.req_str(cls.promt(), text)
         return cls.model_validate_json(text)
 
@@ -96,7 +96,8 @@ class IncomingDialog(BaseDialog):
         action: ActionModel | None = None,
     ):
         operation = await RecognizedOperation.process(
-            request.request.original_utterance
+            self.client,
+            request.request.original_utterance,
         )
         if operation.operation in ACTIONS:
             reply.response.text = (
@@ -123,7 +124,8 @@ class IncomingDialog(BaseDialog):
             return IncomingDialog.recognize_count
 
         entity = await RecognizedEntity.process(
-            request.request.original_utterance
+            self.client,
+            request.request.original_utterance,
         )
         action.entity = entity.entity
 
@@ -141,7 +143,8 @@ class IncomingDialog(BaseDialog):
             return 'done'
 
         count = await RecognizeCount.process(
-            request.request.original_utterance
+            self.client,
+            request.request.original_utterance,
         )
         if count.count is not None:
             action.count = count.count

@@ -2,15 +2,18 @@ from alice_types.request import AliceRequest, State
 from alice_types.response import AliceResponse
 from pydantic import BaseModel
 
+from clients.base import BaseLLMClient
 from dialogs.base import BaseDialog, DialogProcessError
 from operations import ActionModel
 
 
-class TestHappyDialog(BaseDialog):
-    def __init__(self) -> None:
+class TestDialog(BaseDialog):
+    def __init__(self, client: BaseLLMClient) -> None:
+        super().__init__(client)
         self.stages = list[str]()
-        super().__init__()
 
+
+class TestHappyDialog(TestDialog):
     async def begin(
         self,
         request: AliceRequest,
@@ -43,10 +46,10 @@ class TestHappyDialog(BaseDialog):
         return None
 
 
-async def test_dialog_stage(dataset):
+async def test_dialog_stage(dataset, dummy_llm_client):
     alice_request = await dataset.alice_request()
     alice_reply = AliceResponse()
-    dialog = TestHappyDialog()
+    dialog = TestHappyDialog(dummy_llm_client)
     await dialog.process(alice_request, alice_reply)
 
     assert dialog.stages == [
@@ -61,10 +64,7 @@ async def test_dialog_stage(dataset):
     ), 'Остановились в неправильном шаге'
 
 
-class TestErrorDialog(BaseDialog):
-    def __init__(self) -> None:
-        self.stages = list[str]()
-        super().__init__()
+class TestErrorDialog(TestDialog):
 
     async def begin(
         self,
@@ -92,10 +92,10 @@ class TestErrorDialog(BaseDialog):
         return None
 
 
-async def test_dialog_stage_default_error(dataset):
+async def test_dialog_stage_default_error(dataset, dummy_llm_client):
     alice_request = await dataset.alice_request()
     alice_reply = AliceResponse()
-    dialog = TestErrorDialog()
+    dialog = TestErrorDialog(dummy_llm_client)
     await dialog.process(alice_request, alice_reply)
 
     assert dialog.stages == [
@@ -111,11 +111,7 @@ async def test_dialog_stage_default_error(dataset):
     ), 'Конец сессии не установлен'
 
 
-class TesCustomErrorDialog(BaseDialog):
-    def __init__(self) -> None:
-        self.stages = list[str]()
-        super().__init__()
-
+class TesCustomErrorDialog(TestDialog):
     async def begin(
         self,
         request: AliceRequest,
@@ -142,10 +138,10 @@ class TesCustomErrorDialog(BaseDialog):
         return None
 
 
-async def test_dialog_stage_custom_error(dataset):
+async def test_dialog_stage_custom_error(dataset, dummy_llm_client):
     alice_request = await dataset.alice_request()
     alice_reply = AliceResponse()
-    dialog = TesCustomErrorDialog()
+    dialog = TesCustomErrorDialog(dummy_llm_client)
     await dialog.process(alice_request, alice_reply)
 
     assert dialog.stages == [
@@ -166,15 +162,16 @@ class TestAction(BaseModel):
     payload_int: int
 
 
-class TestAdditionalQuestionDialog(BaseDialog):
+class TestAdditionalQuestionDialog(TestDialog):
     actions = {
         'test_action': TestAction,
     }
 
-    def __init__(self, pass_stage_one: bool = False) -> None:
-        self.stages = list[str]()
+    def __init__(
+        self, client: BaseLLMClient, pass_stage_one: bool = False
+    ) -> None:
+        super().__init__(client)
         self.pass_stage_one = pass_stage_one
-        super().__init__()
 
     async def begin(
         self,
@@ -206,10 +203,10 @@ class TestAdditionalQuestionDialog(BaseDialog):
         return None
 
 
-async def test_additional_question(dataset):
+async def test_additional_question(dataset, dummy_llm_client):
     alice_request = await dataset.alice_request()
     alice_reply = AliceResponse()
-    dialog = TestAdditionalQuestionDialog()
+    dialog = TestAdditionalQuestionDialog(dummy_llm_client)
     await dialog.process(alice_request, alice_reply)
 
     assert dialog.stages == [
@@ -231,10 +228,10 @@ async def test_additional_question(dataset):
     }, 'Прикопали неправильный action'
 
 
-async def test_additional_question_process_again(dataset, external_api):
+async def test_additional_question_process_again(dataset, dummy_llm_client):
     alice_request = await dataset.alice_request()
     alice_reply = AliceResponse()
-    dialog = TestAdditionalQuestionDialog()
+    dialog = TestAdditionalQuestionDialog(dummy_llm_client)
     await dialog.process(alice_request, alice_reply)
 
     assert (
@@ -258,7 +255,9 @@ async def test_additional_question_process_again(dataset, external_api):
         )
     )
 
-    dialog_2 = TestAdditionalQuestionDialog(pass_stage_one=True)
+    dialog_2 = TestAdditionalQuestionDialog(
+        dummy_llm_client, pass_stage_one=True
+    )
     alice_reply_2 = AliceResponse()
     await dialog_2.process(alice_request_2, alice_reply_2)
 

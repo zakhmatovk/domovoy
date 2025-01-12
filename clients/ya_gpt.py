@@ -41,11 +41,7 @@ class ResponseGPT(TypedDict):
     result: ResponseResultGPT
 
 
-class BaseClient:
-    base_url: str
-
-
-class YaGPTClient(BaseClient):
+class YaGPTClient:
     base_url = (
         'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
     )
@@ -67,7 +63,7 @@ class YaGPTClient(BaseClient):
                 await response.read()
                 return response
 
-    async def req(self, promt_text: str, message_text: str) -> ResponseGPT:
+    async def req(self, prompt_text: str, message_text: str) -> ResponseGPT:
         promt: RequestGTP = {
             'modelUri': f'gpt://{FOLDER_ID}/yandexgpt-lite/latest',
             'completionOptions': {
@@ -76,14 +72,14 @@ class YaGPTClient(BaseClient):
                 'maxTokens': 2000,
             },
             'messages': [
-                {'role': 'system', 'text': promt_text},
+                {'role': 'system', 'text': prompt_text},
                 {'role': 'user', 'text': message_text},
             ],
         }
         response = await self._req(promt)
         return await response.json()
 
-    async def req_str(self, promt_text: str, message_text: str) -> str:
+    async def req_str(self, prompt_text: str, message_text: str) -> str:
         promt: RequestGTP = {
             'modelUri': f'gpt://{FOLDER_ID}/yandexgpt-lite/latest',
             'completionOptions': {
@@ -92,7 +88,7 @@ class YaGPTClient(BaseClient):
                 'maxTokens': 2000,
             },
             'messages': [
-                {'role': 'system', 'text': promt_text},
+                {'role': 'system', 'text': prompt_text},
                 {'role': 'user', 'text': message_text},
             ],
         }

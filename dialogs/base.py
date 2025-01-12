@@ -2,6 +2,7 @@ from typing import Callable
 from pydantic import BaseModel
 from alice_types.request import AliceRequest
 from alice_types.response import AliceResponse
+from clients.base import BaseLLMClient
 from operations import ActionModel, ACTIONS
 
 
@@ -12,7 +13,8 @@ class DialogProcessError(Exception):
 class BaseDialog:
     actions = ACTIONS
 
-    def __init__(self) -> None:
+    def __init__(self, client: BaseLLMClient) -> None:
+        self.client = client
         self.action: BaseModel | None = None
 
     async def process(self, request: AliceRequest, reply: AliceResponse):
