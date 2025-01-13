@@ -1,10 +1,11 @@
+from typing import ClassVar
 from alice_types.request import AliceRequest, State
 from alice_types.response import AliceResponse
 from pydantic import BaseModel
 
 from clients.base import BaseLLMClient
 from dialogs.base import BaseDialog, DialogProcessError
-from operations import ActionModel
+from operations import ActionModel, UnknownOperation
 
 
 class TestDialog(BaseDialog):
@@ -157,13 +158,14 @@ async def test_dialog_stage_custom_error(dataset, dummy_llm_client):
     ), 'Конец сессии не установлен'
 
 
-class TestAction(BaseModel):
-    operation: str = 'test_action'
+class TestAction(ActionModel):
+    operation: ClassVar[str] = 'test_action'
     payload_int: int
 
 
 class TestAdditionalQuestionDialog(TestDialog):
     actions = {
+        None: UnknownOperation,
         'test_action': TestAction,
     }
 
@@ -181,7 +183,8 @@ class TestAdditionalQuestionDialog(TestDialog):
     ):
         self.stages.append('begin')
         reply.response.text = 'stage begin'
-        self.action = TestAction(payload_int=3)
+        self.action_cls = TestAction
+        self.action_data = dict(payload_int=3)
         return TestAdditionalQuestionDialog.stage_one
 
     async def stage_one(

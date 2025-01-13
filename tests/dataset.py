@@ -18,6 +18,8 @@ class Dataset:
         application_id = str(uuid4())
         version = str(uuid4())
 
+        original_utterance = kw.get('original_utterance', 'Закончилась паста')
+
         return AliceRequest(
             meta=Meta(
                 locale='ru_RU',
@@ -25,7 +27,7 @@ class Dataset:
                 client_id=client_id,
             ),
             request=RequestSimpleUtterance(
-                original_utterance='Закончилась паста', type='SimpleUtterance'
+                original_utterance=original_utterance, type='SimpleUtterance'
             ),
             session=Session(
                 message_id=Decimal(0),

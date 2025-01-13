@@ -23,5 +23,10 @@ class LocalLLMClient:
             ],
             temperature=0.0,
         )
-
+        print('\n')
+        print('-' * 10)
+        print('prompt_text:', prompt_text)
+        print('message_text:', message_text)
+        print('completion:', completion.choices[0].message.content)
+        print('-' * 10)
         return completion.choices[0].message.content or ''

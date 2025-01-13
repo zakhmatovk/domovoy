@@ -5,7 +5,7 @@ from alice_types.response import AliceResponse
 from clients.base import BaseLLMClient
 from clients.ya_gpt import client
 from dialogs.base import BaseDialog
-from operations import ActionModel, ActionWithEntity, ActionWithCount, ACTIONS
+from operations import ActionModel, ACTIONS
 
 CLASSES = [
     'out_of_stock',
@@ -39,12 +39,12 @@ class RecognizedOperation(RecognizedBase):
 - buy_list
 
 Примеры:
-"Кончилась паста" - {"class": "out_of_stock" }
-"Добавь таблетки для посудомойки в список покупок" - {"class": "buy_list"}
-"Я купил капсулы для стиралки" - {"class": "add_stock" }
-"Я купил две пачки капсулы для стиралки по 40 штук" - {"class": "add_stock"}
+"Кончилась паста" - {"operation": "out_of_stock" }
+"Добавь таблетки для посудомойки в список покупок" - {"operation": "buy_list"}
+"Я купил капсулы для стиралки" - {"operation": "add_stock" }
+"Я купил две пачки капсулы для стиралки по 40 штук" - {"operation": "add_stock"}
 
-Дай ответ в формате json
+В ответе должен быть только json
 '''
 
 
@@ -67,7 +67,7 @@ class RecognizedEntity(RecognizedBase):
 class RecognizeCount(RecognizedBase):
     count: int | None
     additional_question: str | None
-    decision: str
+    decision: str | None
 
     @classmethod
     def promt(cls) -> str:
@@ -99,15 +99,19 @@ class IncomingDialog(BaseDialog):
             self.client,
             request.request.original_utterance,
         )
-        if operation.operation in ACTIONS:
+
+        if operation.operation not in ACTIONS:
             reply.response.text = (
                 f'Не знаю такую операцию {operation.operation}'
             )
             reply.response.end_session = True
             return
 
-        operation_cls = ACTIONS[operation.operation]
-        self.action = operation_cls(operation=operation.operation)
+        self.action_cls = ACTIONS[operation.operation]
+        self.action_data = {
+            'operation': operation.operation,
+            'entity': None,
+        }
 
         return IncomingDialog.recognize_entity
 
@@ -115,19 +119,20 @@ class IncomingDialog(BaseDialog):
         self,
         request: AliceRequest,
         reply: AliceResponse,
-        action: ActionWithEntity,
+        action: ActionModel,
     ):
-        if not hasattr(action, 'entity'):
+        fields_set = set(f for f in self.action_cls.model_fields)
+        if 'entity' not in fields_set:
             return IncomingDialog.recognize_count
 
-        if action.entity is not None:
+        if 'entity' not in self.action_data:
             return IncomingDialog.recognize_count
 
         entity = await RecognizedEntity.process(
             self.client,
             request.request.original_utterance,
         )
-        action.entity = entity.entity
+        self.action_data['entity'] = entity.entity
 
         return IncomingDialog.recognize_count
 
@@ -135,19 +140,20 @@ class IncomingDialog(BaseDialog):
         self,
         request: AliceRequest,
         reply: AliceResponse,
-        action: ActionWithCount,
+        action: ActionModel,
     ):
-        if not hasattr(action, 'count'):
-            return 'done'
-        if action.count is not None:
-            return 'done'
+        fields_set = set(f for f in self.action_cls.model_fields)
+        if 'count' not in fields_set:
+            return IncomingDialog.done
+        if 'count' not in self.action_data:
+            return IncomingDialog.done
 
         count = await RecognizeCount.process(
             self.client,
             request.request.original_utterance,
         )
         if count.count is not None:
-            action.count = count.count
+            self.action_data['count'] = count.count
         if count.additional_question is not None:
             reply.response.text = count.additional_question
             return 'recognize_count'
@@ -156,6 +162,7 @@ class IncomingDialog(BaseDialog):
     async def done(
         self, request: AliceRequest, reply: AliceResponse, action: ActionModel
     ):
+        action = self.action_cls.model_validate(self.action_data)
         reply.response.text = action.complete_phrase()
         reply.response.end_session = True
         return None

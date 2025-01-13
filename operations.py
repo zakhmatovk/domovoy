@@ -2,28 +2,29 @@ from pydantic import BaseModel
 from typing import ClassVar, Protocol
 
 
-class ActionModel(Protocol):
+class ActionModel(BaseModel):
+    operation: ClassVar[str] = ''
+
     def complete_phrase(self) -> str:
         raise NotImplementedError()
 
 
-class ActionWithEntity(ActionModel):
-    entity: str
+class UnknownOperation(ActionModel):
+    operation: ClassVar[str] = 'unknown'
+
+    def complete_phrase(self) -> str:
+        return 'Активность не распознана'
 
 
-class ActionWithCount(ActionModel):
-    count: int | None
-
-
-class OutOfStockOperation(BaseModel):
+class OutOfStockOperation(ActionModel):
     operation: ClassVar[str] = 'out_of_stock'
-    entity: str
+    entity: str | None
 
     def complete_phrase(self) -> str:
         return f'{self.entity} закончилось'
 
 
-class AddStockOperation(BaseModel):
+class AddStockOperation(ActionModel):
     operation: ClassVar[str] = 'add_stock'
     entity: str
     count: int | None
@@ -32,7 +33,7 @@ class AddStockOperation(BaseModel):
         return f'Принял {self.count} {self.entity}'
 
 
-class TaskOperation(BaseModel):
+class TaskOperation(ActionModel):
     operation: ClassVar[str] = 'task'
 
     def complete_phrase(self) -> str:
@@ -47,7 +48,8 @@ class BuyListOperation(ActionModel):
         return f'Добавил {self.entity} в список покупок'
 
 
-ACTIONS: dict[str, type[BaseModel]] = {
+ACTIONS: dict[str | None, type[ActionModel]] = {
+    None: UnknownOperation,
     'out_of_stock': OutOfStockOperation,
     'add_stock': AddStockOperation,
     'task': TaskOperation,

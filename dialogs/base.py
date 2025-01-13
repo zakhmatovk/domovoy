@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from alice_types.request import AliceRequest
 from alice_types.response import AliceResponse
 from clients.base import BaseLLMClient
-from operations import ActionModel, ACTIONS
+from operations import ActionModel, ACTIONS, UnknownOperation
 
 
 class DialogProcessError(Exception):
@@ -15,7 +15,8 @@ class BaseDialog:
 
     def __init__(self, client: BaseLLMClient) -> None:
         self.client = client
-        self.action: BaseModel | None = None
+        self.action_data: dict = {}
+        self.action_cls: type[ActionModel] = UnknownOperation
 
     async def process(self, request: AliceRequest, reply: AliceResponse):
         if reply.session_state is None:
@@ -28,10 +29,11 @@ class BaseDialog:
             else:
                 request_session = request.state.session
 
-        action_data = request_session.get('action', {})
-        action_cls = self.actions.get(action_data.get('operation'))
-        if action_cls:
-            self.action = action_cls.model_validate(action_data)
+        self.action_data = request_session.get('action', {})
+        operation: str | None = self.action_data.get('operation')
+        if operation and operation not in self.actions:
+            raise DialogProcessError(f'Операция {operation} не найдена')
+        self.action_cls = self.actions[operation]
 
         stage: str = request_session.get('stage') or 'begin'
         stage_method = getattr(self, stage, None)
@@ -42,13 +44,9 @@ class BaseDialog:
                 if not stage_method:
                     raise DialogProcessError(f'Шаг диалога {stage} не найден')
                 if hasattr(stage_method, '__self__'):
-                    next_stage = await stage_method(
-                        request, reply, self.action
-                    )
+                    next_stage = await stage_method(request, reply, None)
                 else:
-                    next_stage = await stage_method(
-                        self, request, reply, self.action
-                    )
+                    next_stage = await stage_method(self, request, reply, None)
             except DialogProcessError as e:
                 reply.response.text = str(e)
                 reply.response.end_session = True
@@ -67,8 +65,9 @@ class BaseDialog:
             reply.session_state['stage'] = stage_method.__qualname__.split(
                 '.'
             )[-1]
-        if self.action:
-            reply.session_state['action'] = self.action.model_dump()
+        if self.action_data:
+            self.action_data['operation'] = self.action_cls.operation
+            reply.session_state['action'] = self.action_data
 
     async def begin(
         self,
